@@ -1,5 +1,5 @@
 import React from 'react';
-import { useScene } from '../state/SceneContext';
+import { useScene } from '../states/SceneContext';
 import { createCircleShape, createSphereShape, createSpiralShape } from '../utils/shapeGenerators';
 
 export default function Toolbar() {

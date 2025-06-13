@@ -1,5 +1,5 @@
   import React from 'react';
-  import { useScene } from '../state/SceneContext';
+  import { useScene } from '../states/SceneContext';
   
   export default function Inspector() {
     const { selectedEmitter, updateEmitter } = useScene();

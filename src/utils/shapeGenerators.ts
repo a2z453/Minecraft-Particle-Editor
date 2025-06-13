@@ -1,4 +1,4 @@
-import { Emitter } from '../state/types';
+import { Emitter } from '../states/types';
 
 export function createCircleShape(): Partial<Emitter> {
   return {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyframe } from '../state/types';
+import { Keyframe } from '../states/types';
 
 interface Props {
   keyframes: Keyframe[];

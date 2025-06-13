@@ -1,4 +1,4 @@
-import { Emitter } from '../../state/types';
+import { Emitter } from '../../states/types';
 
 export function generateSpigotCode(emitters: Emitter[]): string {
   let code = `public void spawnParticles() {\n`;

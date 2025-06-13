@@ -1,5 +1,5 @@
 import React from 'react';
-import { useScene } from '../state/SceneContext';
+import { useScene } from '../states/SceneContext';
 import KeyframeEditor from '../utils/KeyframeEditor';
 
 export default function Timeline() {
