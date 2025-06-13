@@ -1,7 +1,7 @@
 // src/components/Timeline.tsx
-import React, { useState } from "react";
-import { useScene } from "../states/SceneContext";
-import KeyframeEditor from "../utils/KeyframeEditor";
+import React, { useState } from 'react';
+import { useScene } from '../states/SceneContext';
+import KeyframeEditor from '../utils/KeyframeEditor';
 
 export default function Timeline() {
   const { timeline, addKeyframe, removeKeyframe, emitters } = useScene();

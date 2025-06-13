@@ -1,6 +1,6 @@
 // src/utils/KeyframeEditor.tsx
-import React from "react";
-import { Keyframe } from "../states/types";
+import React from 'react';
+import { Keyframe } from '../states/types';
 
 interface Props {
   keyframes: Keyframe[];
