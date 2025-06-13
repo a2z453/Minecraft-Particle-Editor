@@ -1,29 +1,18 @@
-import { Emitter } from '../states/types';
+// src/utils/shapeGenerators.ts
+import { Emitter } from "../states/types";
 
-export function createCircleShape(): Partial<Emitter> {
-  return {
-    type: 'dust',
-    color: '#ff0000',
-    position: [0,1,0],
-    properties: { lifetime: 2, velocity: 1, spawnRate: 20 },
-    // add extra field `shape: { type: 'circle', radius: 2 }` if needed
-  };
+export function createCircleShape(radius: number = 2): Partial<Emitter>[] {
+  const emitters: Partial<Emitter>[] = [];
+  const count = 20;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * 2 * Math.PI;
+    emitters.push({
+      type: "dust",
+      position: [Math.cos(angle) * radius, 1, Math.sin(angle) * radius],
+      properties: { lifetime: 2, spawnRate: 10, color: "#ff0000" },
+    });
+  }
+  return emitters;
 }
 
-export function createSphereShape(): Partial<Emitter> {
-  return {
-    type: 'smoke',
-    color: '#cccccc',
-    position: [0,1,0],
-    properties: { lifetime: 3, velocity: 0.5, spawnRate: 15 },
-  };
-}
-
-export function createSpiralShape(): Partial<Emitter> {
-  return {
-    type: 'crit',
-    color: '#00ff00',
-    position: [0,1,0],
-    properties: { lifetime: 2, velocity: 2, spawnRate: 25 },
-  };
-}
+// Add sphere, spiral, etc., similarly

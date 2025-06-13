@@ -1,29 +1,47 @@
-  import React from 'react';
-  import { useScene } from '../states/SceneContext';
-  
-  export default function Inspector() {
-    const { selectedEmitter, updateEmitter } = useScene();
-    if (!selectedEmitter) return <div>Select an emitter to view properties</div>;
-  
-    const handleChange = (field, value) => {
-      updateEmitter(selectedEmitter.id, { [field]: value });
-    };
-  
-    return (
-      <div className="mt-4">
-        <h2 className="font-semibold">Inspector</h2>
-        <div className="space-y-2">
-          <label className="block text-sm">Type</label>
-          <select value={selectedEmitter.type} onChange={e => handleChange('type', e.target.value)} className="w-full p-1 border rounded">
-            {['flame','smoke','dust','crit'].map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <label className="block text-sm">Color</label>
-          <input type="color" value={selectedEmitter.color} onChange={e => handleChange('color', e.target.value)} className="w-full h-8 p-0 border rounded" />
-          <label className="block text-sm">Lifetime</label>
-          <input type="number" value={selectedEmitter.properties.lifetime} onChange={e => handleChange('properties.lifetime', +e.target.value)} className="w-full p-1 border rounded" />
-          <label className="block text-sm">Spawn Rate</label>
-          <input type="range" min="1" max="100" value={selectedEmitter.properties.spawnRate} onChange={e => handleChange('properties.spawnRate', +e.target.value)} className="w-full" />
-        </div>
-      </div>
+// src/components/Inspector.tsx
+import React from "react";
+import { useScene } from "../states/SceneContext";
+import { Leva, useControls } from "leva";
+
+export default function Inspector() {
+  const { selectedEmitter, updateEmitter } = useScene();
+
+  if (!selectedEmitter) return <div>Select an emitter to view properties</div>;
+
+  const [values, setValues] = useControls(() => ({
+    type: {
+      value: selectedEmitter.type,
+      options: ["flame", "smoke", "dust", "crit", "sweep_attack", "dust_color_transition"],
+    },
+    position: { value: selectedEmitter.position, step: 0.1 },
+    color: selectedEmitter.properties.color,
+    lifetime: { value: selectedEmitter.properties.lifetime, min: 0, max: 10, step: 0.1 },
+    velocity: { value: selectedEmitter.properties.velocity, step: 0.1 },
+    spawnRate: { value: selectedEmitter.properties.spawnRate, min: 1, max: 100, step: 1 },
+    spread: { value: selectedEmitter.properties.spread, min: 0, max: 5, step: 0.1 },
+    gravity: { value: selectedEmitter.properties.gravity, min: -1, max: 1, step: 0.01 },
+  }));
+
+  React.useEffect(() => {
+    updateEmitter(selectedEmitter.id, {
+      type: values.type,
+      position: values.position,
+      properties: {
+        ...selectedEmitter.properties,
+        color: values.color,
+        lifetime: values.lifetime,
+        velocity: values.velocity,
+        spawnRate: values.spawnRate,
+        spread: values.spread,
+        gravity: values.gravity,
+      },
+    });
+  }, [values]);
+
+  return (
+    <div className="mt-4">
+      <h2 className="font-semibold">Inspector</h2>
+      <Leva hideCopyButton />
+    </div>
   );
-  }
+}

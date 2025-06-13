@@ -1,5 +1,6 @@
-import React from 'react';
-import { Keyframe } from '../states/types';
+// src/utils/KeyframeEditor.tsx
+import React from "react";
+import { Keyframe } from "../states/types";
 
 interface Props {
   keyframes: Keyframe[];
@@ -10,12 +11,15 @@ interface Props {
 export default function KeyframeEditor({ keyframes, onAdd, onRemove }: Props) {
   return (
     <div className="space-y-1">
-      <button onClick={() => onAdd({ emitterId: keyframes[0]?.emitterId, time: Date.now() })} className="px-2 py-1 bg-blue-500 text-white rounded">
+      <button
+        onClick={() => onAdd({ time: 0 })}
+        className="px-2 py-1 bg-blue-500 text-white rounded"
+      >
         + Add Keyframe
       </button>
-      {keyframes.map(kf => (
+      {keyframes.map((kf) => (
         <div key={kf.id} className="flex justify-between items-center p-1 bg-white rounded shadow">
-          <span>Emitter: {kf.emitterId} @ {kf.time}</span>
+          <span>Time: {kf.time}s</span>
           <button onClick={() => onRemove(kf.id)} className="text-red-500">✕</button>
         </div>
       ))}
