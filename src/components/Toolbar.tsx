@@ -2,6 +2,7 @@
 import React from 'react';
 import { useScene } from '../states/SceneContext';
 import { createCircleShape, createSphereShape, createSpiralShape } from '../utils/shapeGenerators';
+import { PARTICLE_DATA } from '../states/types';
 
 const particleCategories = [
   {
@@ -47,7 +48,8 @@ const particleCategories = [
       'large_smoke', 'lava', 'note', 'poof', 'sculk_charge', 'sculk_charge_pop', 'sculk_soul', 'shriek',
       'smoke', 'sneeze', 'sonic_boom', 'soul', 'soul_fire_flame', 'spit', 'splash', 'squid_ink',
       'totem_of_undying', 'trial_omen', 'trial_spawner_detection', 'underwater', 'vault_connection',
-      'vibration', 'wax_off', 'wax_on',
+      'vibration', 'wax_off', 'wax_on', 'gust', 'small_gust', 'infested', 'ominous_spawning', 'raid_omen',
+      'trial_spawner_detection_ominous',
     ],
   },
 ];

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useScene } from '../states/SceneContext';
 import { Leva, useControls } from 'leva';
-import { PARTICLE_DATA } from './Viewport';
+import { PARTICLE_DATA } from '../states/types';
 
 const colorableParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsColor);
 const transitionColorParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsTransitionColor);
