@@ -1,97 +1,100 @@
 // src/states/SceneContext.tsx
-import React, { createContext, useContext, useState } from 'react';
-import { v4 as uuid } from 'uuid';
-import { Emitter, Keyframe } from './types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Emitter } from './types';
 
 interface SceneContextType {
   emitters: Emitter[];
-  timeline: Keyframe[];
-  selectedEmitter?: Emitter;
-  addEmitter: (e: Partial<Emitter>) => void;
-  updateEmitter: (id: string, changes: Partial<Emitter>) => void;
-  selectEmitter: (id: string) => void;
-  addKeyframe: (kf: Partial<Keyframe>) => void;
-  removeKeyframe: (id: string) => void;
+  selectedEmitter: Emitter | null;
+  addEmitter: (emitter: Partial<Emitter>) => void;
+  updateEmitter: (id: string, emitter: Partial<Emitter>) => void;
+  removeEmitter: (id: string) => void;
+  setSelectedEmitter: (id: string | null) => void;
+  resetEmitterParticles: (id: string) => void;
+  currentTime: number; // Animation time in seconds
+  setCurrentTime: (time: number) => void;
 }
 
-const SceneContext = createContext<SceneContextType | null>(null);
+const SceneContext = createContext<SceneContextType | undefined>(undefined);
 
-export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [emitters, setEmitters] = useState<Emitter[]>([]);
-  const [timeline, setTimeline] = useState<Keyframe[]>([]);
-  const [selectedEmitterId, setSelectedEmitterId] = useState<string>();
+  const [selectedEmitterId, setSelectedEmitterId] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
 
-  const addEmitter = (e: Partial<Emitter>) => {
-    const newEmitter: Emitter = {
-      id: uuid(),
-      type: e.type || 'flame',
-      position: e.position || [0, 0, 0],
-      properties: {
-        lifetime: e.properties?.lifetime || 2,
-        velocity: e.properties?.velocity || [0, 0, 0],
-        offset: e.properties?.offset || [0, 0, 0],
-        gravity: e.properties?.gravity || 0,
-        spawnRate: e.properties?.spawnRate || 10,
-        spread: e.properties?.spread || 0.1,
-        direction: e.properties?.direction || [0, 1, 0],
-        color: e.properties?.color || '#ffffff',
-        size: e.properties?.size || 1,
-        fade: e.properties?.fade || [0, 0],
-        count: e.properties?.count || 1,
-        force: e.properties?.force || false,
-        blockData: e.properties?.blockData || null,
-        itemData: e.properties?.itemData || null,
-        transitionColor: e.properties?.transitionColor || null,
-      },
-    };
-    setEmitters((prev) => [...prev, newEmitter]);
-    setSelectedEmitterId(newEmitter.id);
+  const addEmitter = (emitter: Partial<Emitter>) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setEmitters([...emitters, { id, type: 'flame', position: [0, 1, 0], properties: {}, keyframes: [], ...emitter }]);
   };
 
-  const updateEmitter = (id: string, changes: Partial<Emitter>) => {
-    setEmitters((prev) => prev.map((em) => (em.id === id ? { ...em, ...changes } : em)));
+  const updateEmitter = (id: string, emitter: Partial<Emitter>) => {
+    setEmitters(emitters.map((e) => (e.id === id ? { ...e, ...emitter } : e)));
   };
 
-  const selectEmitter = (id: string) => {
+  const removeEmitter = (id: string) => {
+    setEmitters(emitters.filter((e) => e.id !== id));
+    if (selectedEmitterId === id) setSelectedEmitterId(null);
+  };
+
+  const setSelectedEmitter = (id: string | null) => {
     setSelectedEmitterId(id);
   };
 
-  const addKeyframe = (kf: Partial<Keyframe>) => {
-    const newKF: Keyframe = {
-      id: uuid(),
-      emitterId: kf.emitterId!,
-      time: kf.time || 0,
-      properties: kf.properties || {},
+  const resetEmitterParticles = (id: string) => {
+    const emitter = emitters.find((e) => e.id === id);
+    if (emitter) {
+      updateEmitter(id, { ...emitter });
+    }
+  };
+
+  const selectedEmitter = emitters.find((e) => e.id === selectedEmitterId) || null;
+
+  // Animate emitters based on keyframes
+  useEffect(() => {
+    const animate = () => {
+      emitters.forEach((emitter) => {
+        if (emitter.keyframes.length > 0) {
+          const kfBefore = emitter.keyframes.filter((kf) => kf.time <= currentTime).sort((a, b) => b.time - a.time)[0];
+          const kfAfter = emitter.keyframes.filter((kf) => kf.time > currentTime).sort((a, b) => a.time - b.time)[0];
+          if (kfBefore && !kfAfter) {
+            updateEmitter(emitter.id, { position: kfBefore.position, properties: kfBefore.properties });
+          } else if (kfBefore && kfAfter) {
+            const t = (currentTime - kfBefore.time) / (kfAfter.time - kfBefore.time);
+            const lerp = (a: number, b: number) => a + (b - a) * t;
+            const newPosition: [number, number, number] = [
+              lerp(kfBefore.position[0], kfAfter.position[0]),
+              lerp(kfBefore.position[1], kfAfter.position[1]),
+              lerp(kfBefore.position[2], kfAfter.position[2]),
+            ];
+            const newProperties = Object.keys(kfBefore.properties).reduce((acc, key) => {
+              const a = kfBefore.properties[key as keyof ParticleProperties];
+              const b = kfAfter.properties[key as keyof ParticleProperties];
+              if (typeof a === 'number' && typeof b === 'number') {
+                acc[key] = lerp(a, b);
+              } else if (Array.isArray(a) && Array.isArray(b)) {
+                acc[key] = a.map((v, i) => lerp(v, b[i]));
+              } else {
+                acc[key] = a;
+              }
+              return acc;
+            }, {} as Partial<ParticleProperties>);
+            updateEmitter(emitter.id, { position: newPosition, properties: newProperties });
+          }
+        }
+      });
+      requestAnimationFrame(animate);
     };
-    setTimeline((prev) => [...prev, newKF]);
-  };
-
-  const removeKeyframe = (id: string) => {
-    setTimeline((prev) => prev.filter((kf) => kf.id !== id));
-  };
-
-  const selectedEmitter = emitters.find((em) => em.id === selectedEmitterId);
+    animate();
+  }, [currentTime, emitters]);
 
   return (
-    <SceneContext.Provider
-      value={{
-        emitters,
-        timeline,
-        selectedEmitter,
-        addEmitter,
-        updateEmitter,
-        selectEmitter,
-        addKeyframe,
-        removeKeyframe,
-      }}
-    >
+    <SceneContext.Provider value={{ emitters, selectedEmitter, addEmitter, updateEmitter, removeEmitter, setSelectedEmitter, resetEmitterParticles, currentTime, setCurrentTime }}>
       {children}
     </SceneContext.Provider>
   );
-};
+}
 
-export const useScene = () => {
-  const ctx = useContext(SceneContext);
-  if (!ctx) throw new Error('useScene must be inside SceneProvider');
-  return ctx;
-};
+export function useScene() {
+  const context = useContext(SceneContext);
+  if (!context) throw new Error('useScene must be used within a SceneProvider');
+  return context;
+}
