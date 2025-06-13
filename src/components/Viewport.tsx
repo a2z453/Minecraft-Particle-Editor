@@ -114,25 +114,25 @@ const PARTICLE_TEXTURES: { [key: string]: string } = {
 };
 
 const SPRITE_SHEETS: { [key: string]: { count: number; duration: number } } = {
-  big_smoke: { count: 12, duration: 0.6 }, // smoke, large_smoke, campfire_*
-  bubble_pop: { count: 4, duration: 0.2 }, // Adjusted count
-  cherry: { count: 12, duration: 0.6 }, // cherry_leaves
-  effect: { count: 8, duration: 0.4 }, // ambient_entity_effect, effect, etc.
-  explosion: { count: 16, duration: 0.8 }, // explosion, explosion_emitter
-  glitter: { count: 7, duration: 0.35 }, // happy_villager
-  sculk_charge: { count: 6, duration: 0.3 },
+  big_smoke: { count: 12, duration: 0.6 },
+  bubble_pop: { count: 5, duration: 0.25 },
+  cherry: { count: 12, duration: 0.6 },
+  effect: { count: 8, duration: 0.4 },
+  explosion: { count: 16, duration: 0.8 },
+  glitter: { count: 8, duration: 0.4 },
+  sculk_charge: { count: 7, duration: 0.35 },
   sculk_charge_pop: { count: 4, duration: 0.2 },
-  sculk_soul: { count: 10, duration: 0.5 },
-  sonic_boom: { count: 12, duration: 0.6 }, // Adjusted count
-  soul: { count: 10, duration: 0.5 },
-  spark: { count: 8, duration: 0.4 }, // electric_spark, firework
-  spell: { count: 8, duration: 0.4 }, // witch
+  sculk_soul: { count: 11, duration: 0.55 },
+  sonic_boom: { count: 16, duration: 0.8 },
+  soul: { count: 11, duration: 0.55 },
+  spark: { count: 8, duration: 0.4 },
+  spell: { count: 8, duration: 0.4 },
   splash: { count: 4, duration: 0.2 },
-  sweep: { count: 7, duration: 0.35 }, // sweep_attack
-  trial_spawner_detection: { count: 4, duration: 0.2 },
-  trial_spawner_detection_ominous: { count: 4, duration: 0.2 },
-  gust: { count: 10, duration: 0.5 },
-  small_gust: { count: 6, duration: 0.3 },
+  sweep: { count: 8, duration: 0.4 },
+  trial_spawner_detection: { count: 5, duration: 0.25 },
+  trial_spawner_detection_ominous: { count: 5, duration: 0.25 },
+  gust: { count: 12, duration: 0.6 },
+  small_gust: { count: 7, duration: 0.35 },
 };
 
 export default function Viewport() {
