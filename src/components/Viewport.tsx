@@ -5,6 +5,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { useScene } from '../states/SceneContext';
 import { PARTICLE_DATA } from '../states/types';
 
+// Fallback texture for missing images
+const FALLBACK_TEXTURE_PATH = '/textures/generic_0.png';
+
 const PARTICLE_TEXTURES: { [key: string]: string } = {
   ambient_entity_effect: '/textures/effect_0.png',
   angry_villager: '/textures/angry.png',
@@ -147,7 +150,7 @@ export default function Viewport() {
     renderer.setPixelRatio(window.devicePixelRatio);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.5, 1000);
     camera.position.set(5, 5, 5);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -155,7 +158,12 @@ export default function Viewport() {
     controls.dampingFactor = 0.05;
 
     // Add scene elements
-    scene.add(new THREE.GridHelper(50, 50));
+    const grid = new THREE.GridHelper(50, 50, 0x888888, 0x888888);
+    grid.position.y = 0.01;
+    (grid.material as THREE.LineBasicMaterial).linewidth = 2;
+    (grid.material as THREE.LineBasicMaterial).depthTest = true;
+    (grid.material as THREE.LineBasicMaterial).depthWrite = false;
+    scene.add(grid);
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
     // Particle systems management
@@ -185,7 +193,7 @@ export default function Viewport() {
             );
             colors.push(color.r, color.g, color.b);
             sizes.push(emitter.properties.size);
-            uvs.push(0, 0); // Initial UV for sprite sheets
+            uvs.push(0, 0);
           }
 
           geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -196,8 +204,20 @@ export default function Viewport() {
           // Load texture
           const texturePath = (emitter.type === 'item' || emitter.type === 'item_slime' || emitter.type === 'item_snowball') && emitter.properties.itemData
             ? `/textures/items/${emitter.properties.itemData.split(':')[1]}.png`
-            : PARTICLE_TEXTURES[emitter.type] || '/textures/generic_0.png';
-          const texture = textureLoader.load(texturePath);
+            : PARTICLE_TEXTURES[emitter.type] || FALLBACK_TEXTURE_PATH;
+          const texture = textureLoader.load(
+            texturePath,
+            undefined,
+            undefined,
+            (error) => {
+              console.error(`Failed to load texture: ${texturePath}`, error);
+              // Fallback to generic texture
+              textureLoader.load(FALLBACK_TEXTURE_PATH, (fallbackTexture) => {
+                particleSystems[emitter.id].material.map = fallbackTexture;
+                particleSystems[emitter.id].material.needsUpdate = true;
+              });
+            }
+          );
           texture.minFilter = THREE.LinearMipmapLinearFilter;
           texture.magFilter = THREE.LinearFilter;
 
