@@ -1,0 +1,11 @@
+{
+  "emitters": [
+    {
+      "type": "dust",
+      "color": "#FF0000",
+      "position": [0, 1, 0],
+      "properties": {"lifetime":2}
+    }
+  ],
+  "timeline": []
+}
