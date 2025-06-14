@@ -2,11 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './styles.css';
-import { SceneProvider } from './states/SceneContext'; // <- ✅ import this
+import { SceneProvider } from './states/SceneContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <SceneProvider>  {/* ✅ Wrap App in SceneProvider */}
+    <SceneProvider>
       <App />
     </SceneProvider>
   </React.StrictMode>

@@ -1,11 +1,10 @@
-// src/components/Viewport.tsx
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { useScene } from '../states/SceneContext';
 import { PARTICLE_DATA } from '../states/types';
 
-// Fallback texture for missing images
 const FALLBACK_TEXTURE_PATH = '/textures/generic_0.png';
 
 const PARTICLE_TEXTURES: { [key: string]: string } = {
@@ -137,12 +136,12 @@ const SPRITE_SHEETS: { [key: string]: { count: number; duration: number } } = {
 
 export default function Viewport() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { emitters } = useScene();
+  const { emitters, selectedEmitter, updateEmitter } = useScene();
+  const transformControlsRef = useRef<TransformControls | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Initialize Three.js
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true });
     const width = window.innerWidth - 64;
     const height = window.innerHeight - 44 - 128;
@@ -157,7 +156,6 @@ export default function Viewport() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
-    // Add scene elements
     const grid = new THREE.GridHelper(50, 50, 0x888888, 0x888888);
     grid.position.y = 0.01;
     (grid.material as THREE.LineBasicMaterial).linewidth = 2;
@@ -166,15 +164,25 @@ export default function Viewport() {
     scene.add(grid);
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-    // Particle systems management
     const particleSystems: { [key: string]: THREE.Points } = {};
     const textureLoader = new THREE.TextureLoader();
     const spriteSheetTimers: { [key: string]: number } = {};
 
+    const transformControls = new TransformControls(camera, renderer.domElement);
+    transformControlsRef.current = transformControls;
+    transformControls.addEventListener('change', () => {
+      if (selectedEmitter && transformControls.object) {
+        const pos = transformControls.object.position.toArray() as [number, number, number];
+        const rot = transformControls.object.rotation.toArray().slice(0, 3) as [number, number, number];
+        const scale = transformControls.object.scale.toArray() as [number, number, number];
+        updateEmitter(selectedEmitter.id, { position: pos, rotation: rot, scale });
+      }
+    });
+    scene.add(transformControls);
+
     const updateParticles = (delta: number) => {
       emitters.forEach((emitter) => {
         if (!particleSystems[emitter.id]) {
-          // Create new particle system
           const geometry = new THREE.BufferGeometry();
           const positions: number[] = [];
           const colors: number[] = [];
@@ -201,25 +209,12 @@ export default function Viewport() {
           geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
           geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
 
-          // Load texture
-          const texturePath = (emitter.type === 'item' || emitter.type === 'item_slime' || emitter.type === 'item_snowball') && emitter.properties.itemData
+          const texturePath = emitter.properties.customTexture
+            ? emitter.properties.customTexture
+            : (emitter.type === 'item' || emitter.type === 'item_slime' || emitter.type === 'item_snowball') && emitter.properties.itemData
             ? `/textures/items/${emitter.properties.itemData.split(':')[1]}.png`
             : PARTICLE_TEXTURES[emitter.type] || FALLBACK_TEXTURE_PATH;
-          const texture = textureLoader.load(
-            texturePath,
-            undefined,
-            undefined,
-            (error) => {
-              console.error(`Failed to load texture: ${texturePath}`, error);
-              // Fallback to generic texture
-              textureLoader.load(FALLBACK_TEXTURE_PATH, (fallbackTexture) => {
-                particleSystems[emitter.id].material.map = fallbackTexture;
-                particleSystems[emitter.id].material.needsUpdate = true;
-              });
-            }
-          );
-          texture.minFilter = THREE.LinearMipmapLinearFilter;
-          texture.magFilter = THREE.LinearFilter;
+          const texture = textureLoader.load(texturePath);
 
           const material = new THREE.PointsMaterial({
             vertexColors: true,
@@ -229,7 +224,6 @@ export default function Viewport() {
             alphaTest: 0.5,
           });
 
-          // Configure sprite sheet
           const spriteKey = Object.keys(SPRITE_SHEETS).find((key) =>
             texturePath.includes(key)
           );
@@ -242,7 +236,6 @@ export default function Viewport() {
           scene.add(particleSystems[emitter.id]);
         }
 
-        // Update particle positions
         const positions = particleSystems[emitter.id].geometry.attributes.position.array as number[];
         for (let i = 0; i < positions.length; i += 3) {
           positions[i] += emitter.properties.velocity[0] * delta;
@@ -251,7 +244,6 @@ export default function Viewport() {
         }
         particleSystems[emitter.id].geometry.attributes.position.needsUpdate = true;
 
-        // Update sprite sheet animation
         const spriteKey = Object.keys(SPRITE_SHEETS).find((key) =>
           PARTICLE_TEXTURES[emitter.type]?.includes(key)
         );
@@ -265,7 +257,6 @@ export default function Viewport() {
         }
       });
 
-      // Clean up removed emitters
       Object.keys(particleSystems).forEach((id) => {
         if (!emitters.find((e) => e.id === id)) {
           scene.remove(particleSystems[id]);
@@ -277,7 +268,26 @@ export default function Viewport() {
       });
     };
 
-    // Animation loop
+    const helper = new THREE.Object3D();
+    if (selectedEmitter) {
+      helper.position.set(...selectedEmitter.position);
+      helper.rotation.set(...selectedEmitter.rotation.map((deg) => THREE.MathUtils.degToRad(deg)));
+      helper.scale.set(...selectedEmitter.scale);
+      transformControls.attach(helper);
+    } else {
+      transformControls.detach();
+    }
+
+    let mode: 'translate' | 'rotate' | 'scale' = 'translate';
+    const setMode = (newMode: 'translate' | 'rotate' | 'scale') => {
+      mode = newMode;
+      transformControls.setMode(mode);
+      transformControls.showX = true;
+      transformControls.showY = true;
+      transformControls.showZ = true;
+    };
+    setMode('translate');
+
     let lastTime = performance.now();
     const animate = () => {
       const now = performance.now();
@@ -291,7 +301,6 @@ export default function Viewport() {
     };
     animate();
 
-    // Handle resize
     const onResize = () => {
       const newWidth = window.innerWidth - 64;
       const newHeight = window.innerHeight - 44 - 128;
@@ -301,9 +310,24 @@ export default function Viewport() {
     };
     window.addEventListener('resize', onResize);
 
-    // Cleanup
+    const onKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'g':
+          setMode('translate');
+          break;
+        case 'r':
+          setMode('rotate');
+          break;
+        case 's':
+          setMode('scale');
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
     return () => {
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('keydown', onKeyDown);
       Object.values(particleSystems).forEach((system) => {
         scene.remove(system);
         system.geometry.dispose();
@@ -311,7 +335,14 @@ export default function Viewport() {
       });
       renderer.dispose();
     };
-  }, [emitters]);
+  }, [emitters, selectedEmitter]);
 
-  return <canvas ref={canvasRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <canvas ref={canvasRef} className="w-full h-full" />
+      <div className="absolute top-2 right-2 text-white bg-black bg-opacity-50 p-2 rounded">
+        <p>G: Move | R: Rotate | S: Scale</p>
+      </div>
+    </div>
+  );
 }

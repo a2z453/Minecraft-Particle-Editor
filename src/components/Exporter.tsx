@@ -1,15 +1,14 @@
-// src/components/Exporter.tsx
 import React, { useState } from 'react';
 import { useScene } from '../states/SceneContext';
-import { Emitter, ParticleProperties } from '../states/types';
+import { generateSpigotCode } from './exporters/CodeExport';
+import { Emitter } from '../states/types';
+import * as THREE from 'three';
 
 const Exporter: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { emitters } = useScene();
-  const [exportFormat, setExportFormat] = useState<'commands' | 'json'>('commands');
+  const [exportFormat, setExportFormat] = useState<'commands' | 'plugin' | 'json'>('commands');
 
-  const generateParticleCommand = (emitter: Emitter, keyframe?: ParticleProperties & { position: [number, number, number] }) => {
-    const props = keyframe || emitter.properties;
-    const pos = keyframe ? keyframe.position : emitter.position;
+  const generateParticleCommand = (emitter: Emitter, props: any, pos: [number, number, number]) => {
     const [x, y, z] = pos;
     const [vx, vy, vz] = props.velocity || [0, 0, 0];
     const count = props.count || 1;
@@ -35,66 +34,52 @@ const Exporter: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const exportContent = () => {
     if (exportFormat === 'commands') {
-      return emitters
-        .map((emitter) => {
-          if (emitter.keyframes.length > 0) {
-            return emitter.keyframes
-              .map((kf, index) => {
-                const cmd = generateParticleCommand(emitter, { ...kf.properties, position: kf.position });
-                return `# Keyframe ${index + 1} at ${kf.time}s\n${cmd}`;
-              })
-              .join('\n');
-          }
-          return generateParticleCommand(emitter);
-        })
-        .join('\n\n');
+      const commands: string[] = [];
+      emitters.forEach((emitter) => {
+        if (emitter.keyframes.length > 0) {
+          emitter.keyframes.forEach((kf, index) => {
+            const delay = index === 0 ? 0 : Math.floor((kf.time - emitter.keyframes[index - 1].time) * 20);
+            commands.push(`# Time: ${kf.time}s`);
+            commands.push(generateParticleCommand(emitter, kf.properties, kf.position));
+            if (delay > 0) commands.push(`schedule function particle:run ${delay}t append`);
+          });
+        } else {
+          commands.push(generateParticleCommand(emitter, emitter.properties, emitter.position));
+        }
+      });
+      return commands.join('\n');
+    } else if (exportFormat === 'plugin') {
+      return generateSpigotCode(emitters);
     } else {
-      return JSON.stringify(
-        emitters.map((e) => ({
-          id: e.id,
-          type: e.type,
-          position: e.position,
-          properties: e.properties,
-          keyframes: e.keyframes,
-        })),
-        null,
-        2
-      );
+      return JSON.stringify(emitters, null, 2);
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(exportContent());
-    alert('Exported content copied to clipboard!');
   };
 
   const handleDownload = () => {
     const content = exportContent();
-    const blob = new Blob([content], { type: exportFormat === 'commands' ? 'text/plain' : 'application/json' });
+    const blob = new Blob([content], { type: exportFormat === 'json' ? 'application/json' : 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `particles.${exportFormat === 'commands' ? 'mcfunction' : 'json'}`;
+    a.download = `particles.${exportFormat === 'commands' ? 'mcfunction' : exportFormat === 'plugin' ? 'java' : 'json'}`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="absolute top-16 left-4 bg-white bg-opacity-80 p-4 rounded shadow-lg z-20">
+    <div className="absolute top-16 right-4 bg-white bg-opacity-80 p-4 rounded shadow-lg z-20">
       <h2 className="font-semibold text-sm mb-2">Export Particles</h2>
       <select
         value={exportFormat}
-        onChange={(e) => setExportFormat(e.target.value as 'commands' | 'json')}
+        onChange={(e) => setExportFormat(e.target.value as 'commands' | 'plugin' | 'json')}
         className="w-40 p-1 text-sm border rounded mb-2"
       >
         <option value="commands">Minecraft Commands</option>
-        <option value="json">JSON</option>
+        <option value="plugin">Spigot Plugin</option>
+        <option value="json">JSON Project</option>
       </select>
       <div className="flex gap-2">
-        <button onClick={handleCopy} className="p-1 text-sm bg-gray-100 rounded hover:bg-gray-200">
-          Copy
-        </button>
-        <button onClick={handleDownload} className="p-1 text-sm bg-gray-100 rounded hover:bg-gray-200">
+        <button onClick={handleDownload} className="p-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
           Download
         </button>
         <button onClick={onClose} className="p-1 text-sm bg-gray-100 rounded hover:bg-gray-200">

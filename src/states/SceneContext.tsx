@@ -1,25 +1,26 @@
-// src/states/SceneContext.tsx
 import React, { createContext, useContext, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { Emitter, Keyframe } from './types';
 
 interface SceneContextType {
   emitters: Emitter[];
-  timeline: Keyframe[];
   selectedEmitter?: Emitter;
+  selectedKeyframeId?: string;
   addEmitter: (e: Partial<Emitter>) => void;
   updateEmitter: (id: string, changes: Partial<Emitter>) => void;
   selectEmitter: (id: string) => void;
-  addKeyframe: (kf: Partial<Keyframe>) => void;
-  removeKeyframe: (id: string) => void;
+  addKeyframe: (emitterId: string, kf: Partial<Keyframe>) => void;
+  updateKeyframe: (emitterId: string, kfId: string, changes: Partial<Keyframe>) => void;
+  removeKeyframe: (emitterId: string, id: string) => void;
+  selectKeyframe: (id: string) => void;
 }
 
 const SceneContext = createContext<SceneContextType | null>(null);
 
 export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [emitters, setEmitters] = useState<Emitter[]>([]);
-  const [timeline, setTimeline] = useState<Keyframe[]>([]);
   const [selectedEmitterId, setSelectedEmitterId] = useState<string>();
+  const [selectedKeyframeId, setSelectedKeyframeId] = useState<string>();
 
   const addEmitter = (e: Partial<Emitter>) => {
     const newEmitter: Emitter = {
@@ -43,9 +44,11 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         itemData: e.properties?.itemData || null,
         transitionColor: e.properties?.transitionColor || null,
       },
+      keyframes: [],
     };
     setEmitters((prev) => [...prev, newEmitter]);
     setSelectedEmitterId(newEmitter.id);
+    setSelectedKeyframeId(undefined);
   };
 
   const updateEmitter = (id: string, changes: Partial<Emitter>) => {
@@ -54,20 +57,47 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const selectEmitter = (id: string) => {
     setSelectedEmitterId(id);
+    setSelectedKeyframeId(undefined);
   };
 
-  const addKeyframe = (kf: Partial<Keyframe>) => {
+  const addKeyframe = (emitterId: string, kf: Partial<Keyframe>) => {
     const newKF: Keyframe = {
       id: uuid(),
-      emitterId: kf.emitterId!,
       time: kf.time || 0,
-      properties: kf.properties || {},
+      position: kf.position || emitters.find((e) => e.id === emitterId)!.position,
+      properties: kf.properties || { ...emitters.find((e) => e.id === emitterId)!.properties },
     };
-    setTimeline((prev) => [...prev, newKF]);
+    setEmitters((prev) =>
+      prev.map((em) => (em.id === emitterId ? { ...em, keyframes: [...em.keyframes, newKF] } : em))
+    );
   };
 
-  const removeKeyframe = (id: string) => {
-    setTimeline((prev) => prev.filter((kf) => kf.id !== id));
+  const updateKeyframe = (emitterId: string, kfId: string, changes: Partial<Keyframe>) => {
+    setEmitters((prev) =>
+      prev.map((em) =>
+        em.id === emitterId
+          ? {
+              ...em,
+              keyframes: em.keyframes.map((kf) => (kf.id === kfId ? { ...kf, ...changes } : kf)),
+            }
+          : em
+      )
+    );
+  };
+
+  const removeKeyframe = (emitterId: string, id: string) => {
+    setEmitters((prev) =>
+      prev.map((em) =>
+        em.id === emitterId
+          ? { ...em, keyframes: em.keyframes.filter((kf) => kf.id !== id) }
+          : em
+      )
+    );
+    if (selectedKeyframeId === id) setSelectedKeyframeId(undefined);
+  };
+
+  const selectKeyframe = (id: string) => {
+    setSelectedKeyframeId(id);
   };
 
   const selectedEmitter = emitters.find((em) => em.id === selectedEmitterId);
@@ -76,13 +106,15 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <SceneContext.Provider
       value={{
         emitters,
-        timeline,
         selectedEmitter,
+        selectedKeyframeId,
         addEmitter,
         updateEmitter,
         selectEmitter,
         addKeyframe,
+        updateKeyframe,
         removeKeyframe,
+        selectKeyframe,
       }}
     >
       {children}

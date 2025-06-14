@@ -1,10 +1,11 @@
-// src/utils/shapeGenerators.ts
 import { Emitter } from '../states/types';
 
 export function createCircleShape(): Partial<Emitter> {
   return {
     type: 'flame',
     position: [0, 1, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
     properties: {
       lifetime: 2,
       spawnRate: 20,
@@ -13,8 +14,7 @@ export function createCircleShape(): Partial<Emitter> {
       velocity: [0, 0.2, 0],
       direction: [0, 1, 0],
       size: 0.5,
-      // Circle pattern: particles spawn in a ring
-      offset: [1, 0, 0], // Starting offset
+      offset: [1, 0, 0], // Circle radius
     },
   };
 }
@@ -23,6 +23,8 @@ export function createSphereShape(): Partial<Emitter> {
   return {
     type: 'dust',
     position: [0, 1, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
     properties: {
       lifetime: 3,
       spawnRate: 30,
@@ -32,7 +34,6 @@ export function createSphereShape(): Partial<Emitter> {
       direction: [0, 1, 0],
       size: 0.3,
       color: '#ff0000',
-      // Sphere pattern: particles spread evenly in all directions
     },
   };
 }
@@ -41,6 +42,8 @@ export function createSpiralShape(): Partial<Emitter> {
   return {
     type: 'smoke',
     position: [0, 1, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
     properties: {
       lifetime: 4,
       spawnRate: 25,
@@ -49,7 +52,25 @@ export function createSpiralShape(): Partial<Emitter> {
       velocity: [0, 0.3, 0],
       direction: [0, 1, 0],
       size: 0.7,
-      // Spiral pattern: particles rotate around Y-axis
+      offset: [0.5, 0, 0],
+    },
+  };
+}
+
+export function createStarShape(): Partial<Emitter> {
+  return {
+    type: 'spark',
+    position: [0, 1, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    properties: {
+      lifetime: 2,
+      spawnRate: 15,
+      spread: 0.1,
+      count: 5,
+      velocity: [0, 0.1, 0],
+      direction: [0, 1, 0],
+      size: 0.4,
       offset: [0.5, 0, 0],
     },
   };

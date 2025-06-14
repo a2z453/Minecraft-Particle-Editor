@@ -1,11 +1,33 @@
 {
   "emitters": [
     {
+      "id": "sample1",
       "type": "dust",
-      "color": "#FF0000",
       "position": [0, 1, 0],
-      "properties": {"lifetime":2}
+      "rotation": [0, 0, 0],
+      "scale": [1, 1, 1],
+      "properties": {
+        "lifetime": 2,
+        "color": "#FF0000"
+      },
+      "keyframes": [
+        {
+          "id": "kf1",
+          "time": 0,
+          "position": [0, 1, 0],
+          "properties": {
+            "color": "#FF0000"
+          }
+        },
+        {
+          "id": "kf2",
+          "time": 2,
+          "position": [2, 1, 0],
+          "properties": {
+            "color": "#00FF00"
+          }
+        }
+      ]
     }
-  ],
-  "timeline": []
+  ]
 }
