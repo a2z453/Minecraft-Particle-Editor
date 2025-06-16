@@ -201,7 +201,7 @@ export default function Viewport() {
             );
             colors.push(color.r, color.g, color.b);
             sizes.push(emitter.properties.size);
-            uvs.push(0, 0);
+            uvs.push(0, 0); // Initial UV for sprite sheet
           }
 
           geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -214,7 +214,10 @@ export default function Viewport() {
             : (emitter.type === 'item' || emitter.type === 'item_slime' || emitter.type === 'item_snowball') && emitter.properties.itemData
             ? `/textures/items/${emitter.properties.itemData.split(':')[1]}.png`
             : PARTICLE_TEXTURES[emitter.type] || FALLBACK_TEXTURE_PATH;
-          const texture = textureLoader.load(texturePath);
+          const texture = textureLoader.load(texturePath, (tex) => {
+            tex.minFilter = THREE.NearestFilter;
+            tex.magFilter = THREE.NearestFilter;
+          });
 
           const material = new THREE.PointsMaterial({
             vertexColors: true,
@@ -222,6 +225,7 @@ export default function Viewport() {
             transparent: true,
             map: texture,
             alphaTest: 0.5,
+            blending: THREE.AdditiveBlending, // Enhanced blending for better visuals
           });
 
           const spriteKey = Object.keys(SPRITE_SHEETS).find((key) =>
@@ -254,6 +258,29 @@ export default function Viewport() {
           const material = particleSystems[emitter.id].material as THREE.PointsMaterial;
           material.map.offset.set(frame / SPRITE_SHEETS[spriteKey].count, 0);
           material.map.needsUpdate = true;
+
+          // Update UVs for sprite sheet animation
+          const uvs = particleSystems[emitter.id].geometry.attributes.uv.array as number[];
+          for (let i = 0; i < uvs.length; i += 2) {
+            uvs[i] = (frame / SPRITE_SHEETS[spriteKey].count) + (i % 2 === 0 ? 0 : 1e-6); // Small offset to avoid texture bleeding
+            uvs[i + 1] = 0;
+          }
+          particleSystems[emitter.id].geometry.attributes.uv.needsUpdate = true;
+        }
+
+        // Apply fade effect if defined
+        if (emitter.properties.fade && emitter.properties.fade.length === 2) {
+          const [startFade, endFade] = emitter.properties.fade;
+          const lifeTime = emitter.properties.lifetime;
+          const ageFactor = (spriteSheetTimers[emitter.id] || 0) / lifeTime;
+          if (ageFactor >= startFade && ageFactor <= endFade) {
+            const alpha = 1 - ((ageFactor - startFade) / (endFade - startFade));
+            (particleSystems[emitter.id].material as THREE.PointsMaterial).opacity = alpha;
+          } else if (ageFactor > endFade) {
+            (particleSystems[emitter.id].material as THREE.PointsMaterial).opacity = 0;
+          } else {
+            (particleSystems[emitter.id].material as THREE.PointsMaterial).opacity = 1;
+          }
         }
       });
 
