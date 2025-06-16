@@ -20,7 +20,7 @@ export default function App() {
         </button>
       </header>
       <div className="flex flex-1">
-        <aside className="w-64 bg-gray-100 p-2 overflow-y-auto">
+        <aside className="w-64 bg-gray-100 p-2 overflow-y-auto overflow-x-hidden">
           <Toolbar />
           <Inspector />
         </aside>

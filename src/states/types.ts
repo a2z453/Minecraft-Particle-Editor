@@ -1,35 +1,35 @@
 export interface Keyframe {
   id: string;
-  time: number; // Time in seconds
-  position: [number, number, number];
+  time: number;
+  position: { x: number; y: number; z: number };
   properties: Partial<ParticleProperties>;
 }
 
 export interface ParticleProperties {
-  lifetime: number; // Seconds
-  velocity: [number, number, number]; // Motion per second
-  offset: [number, number, number]; // Spawn offset
-  gravity: number; // Downward acceleration
-  spawnRate: number; // Particles per second
-  spread: number; // Random spawn radius
-  direction: [number, number, number]; // Normalized direction vector
-  color?: string; // Hex color
-  size: number; // Particle scale
-  fade: [number, number]; // Fade in/out times
-  count: number; // Number of particles
-  force: boolean; // Force mode
-  blockData?: string; // e.g., "minecraft:stone"
-  itemData?: string; // e.g., "minecraft:apple"
-  transitionColor?: string; // For dust_color_transition
-  customTexture?: string; // Base64 encoded texture
+  lifetime: number;
+  velocity: { x: number; y: number; z: number };
+  offset: { x: number; y: number; z: number };
+  gravity: number;
+  spawnRate: number;
+  spread: number;
+  direction: { x: number; y: number; z: number };
+  color?: string;
+  size: number;
+  fade: [number, number];
+  count: number;
+  force: boolean;
+  blockData?: string;
+  itemData?: string;
+  transitionColor?: string;
+  customTexture?: string;
 }
 
 export interface Emitter {
   id: string;
-  type: string; // Particle type
-  position: [number, number, number]; // Emitter position
-  rotation: [number, number, number]; // Euler angles in degrees
-  scale: [number, number, number]; // Scale factors
+  type: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  scale: { x: number; y: number; z: number };
   properties: ParticleProperties;
   keyframes: Keyframe[];
 }

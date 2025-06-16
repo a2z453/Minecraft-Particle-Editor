@@ -3,13 +3,17 @@ import { useScene } from '../states/SceneContext';
 import { Leva, useControls } from 'leva';
 import { PARTICLE_DATA } from '../states/types';
 
+// Helper functions to convert between array and object formats
+const toVec = (arr: [number, number, number]) => ({ x: arr[0], y: arr[1], z: arr[2] });
+const fromVec = (obj: { x: number; y: number; z: number }) => [obj.x, obj.y, obj.z] as [number, number, number];
+
 const colorableParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsColor);
 const transitionColorParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsTransitionColor);
 const blockParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsBlockData);
 const itemParticles = Object.keys(PARTICLE_DATA).filter((type) => PARTICLE_DATA[type].supportsItemData);
 
 export default function Inspector() {
-  const { selectedEmitter, selectedKeyframeId, updateEmitter, emitters, updateKeyframe } = useScene();
+  const { selectedEmitter, selectedKeyframeId, updateEmitter, updateKeyframe } = useScene();
 
   if (!selectedEmitter) return <div>Select an emitter or keyframe to view properties</div>;
 
@@ -18,14 +22,14 @@ export default function Inspector() {
   const controls = selectedKeyframe
     ? {
         time: { value: selectedKeyframe.time, min: 0, max: 60, step: 0.1 },
-        position: { value: selectedKeyframe.position, step: 0.1 },
+        position: { value: toVec(selectedKeyframe.position), step: 0.1 },
         lifetime: { value: selectedKeyframe.properties.lifetime || 2, min: 0, max: 10, step: 0.1 },
-        velocity: { value: selectedKeyframe.properties.velocity || [0, 0, 0], step: 0.1 },
-        offset: { value: selectedKeyframe.properties.offset || [0, 0, 0], step: 0.1 },
+        velocity: { value: toVec(selectedKeyframe.properties.velocity || [0, 0, 0]), step: 0.1 },
+        offset: { value: toVec(selectedKeyframe.properties.offset || [0, 0, 0]), step: 0.1 },
         gravity: { value: selectedKeyframe.properties.gravity || 0, min: -1, max: 1, step: 0.01 },
         spawnRate: { value: selectedKeyframe.properties.spawnRate || 10, min: 1, max: 100, step: 1 },
         spread: { value: selectedKeyframe.properties.spread || 0.1, min: 0, max: 5, step: 0.1 },
-        direction: { value: selectedKeyframe.properties.direction || [0, 1, 0], step: 0.1 },
+        direction: { value: toVec(selectedKeyframe.properties.direction || [0, 1, 0]), step: 0.1 },
         ...(colorableParticles.includes(selectedEmitter.type) && {
           color: selectedKeyframe.properties.color || '#ffffff',
         }),
@@ -49,16 +53,16 @@ export default function Inspector() {
           value: selectedEmitter.type,
           options: Object.keys(PARTICLE_DATA),
         },
-        position: { value: selectedEmitter.position, step: 0.1 },
-        rotation: { value: selectedEmitter.rotation, step: 1 },
-        scale: { value: selectedEmitter.scale, step: 0.1 },
+        position: { value: toVec(selectedEmitter.position), step: 0.1 },
+        rotation: { value: toVec(selectedEmitter.rotation), step: 1 },
+        scale: { value: toVec(selectedEmitter.scale), step: 0.1 },
         lifetime: { value: selectedEmitter.properties.lifetime, min: 0, max: 10, step: 0.1 },
-        velocity: { value: selectedEmitter.properties.velocity, step: 0.1 },
-        offset: { value: selectedEmitter.properties.offset, step: 0.1 },
+        velocity: { value: toVec(selectedEmitter.properties.velocity), step: 0.1 },
+        offset: { value: toVec(selectedEmitter.properties.offset), step: 0.1 },
         gravity: { value: selectedEmitter.properties.gravity, min: -1, max: 1, step: 0.01 },
         spawnRate: { value: selectedEmitter.properties.spawnRate, min: 1, max: 100, step: 1 },
         spread: { value: selectedEmitter.properties.spread, min: 0, max: 5, step: 0.1 },
-        direction: { value: selectedEmitter.properties.direction, step: 0.1 },
+        direction: { value: toVec(selectedEmitter.properties.direction), step: 0.1 },
         ...(colorableParticles.includes(selectedEmitter.type) && {
           color: selectedEmitter.properties.color || '#ffffff',
         }),
@@ -84,15 +88,15 @@ export default function Inspector() {
     if (selectedKeyframe) {
       updateKeyframe(selectedEmitter.id, selectedKeyframe.id, {
         time: values.time,
-        position: values.position,
+        position: fromVec(values.position),
         properties: {
           lifetime: values.lifetime,
-          velocity: values.velocity,
-          offset: values.offset,
+          velocity: fromVec(values.velocity),
+          offset: fromVec(values.offset),
           gravity: values.gravity,
           spawnRate: values.spawnRate,
           spread: values.spread,
-          direction: values.direction,
+          direction: fromVec(values.direction),
           ...(colorableParticles.includes(selectedEmitter.type) && { color: values.color }),
           size: values.size,
           fade: values.fade,
@@ -107,18 +111,18 @@ export default function Inspector() {
     } else {
       updateEmitter(selectedEmitter.id, {
         type: values.type,
-        position: values.position,
-        rotation: values.rotation,
-        scale: values.scale,
+        position: fromVec(values.position),
+        rotation: fromVec(values.rotation),
+        scale: fromVec(values.scale),
         properties: {
           ...selectedEmitter.properties,
           lifetime: values.lifetime,
-          velocity: values.velocity,
-          offset: values.offset,
+          velocity: fromVec(values.velocity),
+          offset: fromVec(values.offset),
           gravity: values.gravity,
           spawnRate: values.spawnRate,
           spread: values.spread,
-          direction: values.direction,
+          direction: fromVec(values.direction),
           ...(colorableParticles.includes(values.type) && { color: values.color }),
           size: values.size,
           fade: values.fade,

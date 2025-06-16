@@ -5,7 +5,7 @@ import KeyframeEditor from '../utils/KeyframeEditor';
 export default function Timeline() {
   const { emitters } = useScene();
   const [currentTime, setCurrentTime] = useState(0);
-  const duration = 60; // seconds
+  const duration = 60;
 
   return (
     <div className="h-full p-2 overflow-y-auto">
